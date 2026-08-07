@@ -653,77 +653,6 @@
       }
     }
 
-    /* --- yolculuk katmanı: çekirdek + akış (sabit WebGL) --- */
-    .yol {
-      position: fixed;
-      inset: 0;
-      z-index: 4;
-      width: 100%;
-      height: 100%;
-      pointer-events: none
-    }
-
-    .taneAlan {
-      width: min(400px, 74vw);
-      aspect-ratio: 1/1.02
-    }
-
-    @media(min-width:900px) {
-      .taneAlan {
-        width: min(440px, 30vw)
-      }
-    }
-
-    /* dar ekranda akış sağ kıyıdan aktığı için sağa yaslı satırlara nefes payı */
-    @media(max-width:899px) {
-      html:not(.no-yol) .ak__urun {
-        padding-right: 22px
-      }
-
-      html:not(.no-yol) .hours>div {
-        padding-right: 22px
-      }
-    }
-
-    html.no-yol .taneAlan {
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84'%3E%3Cg transform='rotate(-24 42 42)'%3E%3Cellipse cx='42' cy='42' rx='17' ry='11.5' fill='%235a3319'/%3E%3Cpath d='M25 42q8.5 -6 17 0t17 0' stroke='%23331b0c' stroke-width='3' fill='none'/%3E%3C/g%3E%3C/svg%3E") center/84px 84px;
-      opacity: .45;
-      border-radius: 28px
-    }
-
-    /* --- son durak: dolan fincan --- */
-    .dolum {
-      position: relative;
-      z-index: 3;
-      background: var(--gece);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 30px;
-      padding: 150px var(--pad) 84px
-    }
-
-    .dolum .label {
-      color: var(--lamba);
-      align-self: flex-start
-    }
-
-    .dolum__not {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--mute-dark);
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity .8s var(--ease), transform .8s var(--ease)
-    }
-
-    .dolum__not.tam {
-      opacity: 1;
-      transform: none
-    }
-
     /* --- şerit --- */
     .strip {
       background: var(--lamba);
@@ -1302,7 +1231,6 @@
       <a href="#menu">Menü</a><a href="#usul">Ev usulü</a><a href="#mekan">Mekân</a><a href="#ziyaret">Yol tarifi</a>
     </nav>
   </header>
-  <canvas id="yol" class="yol" aria-hidden="true"></canvas>
   <main id="icerik">
     <section class="hero">
       <div>
@@ -1316,9 +1244,13 @@
         </div>
       </div>
       <div class="hero__stage">
-        <div class="taneAlan" id="taneAlan" aria-hidden="true"></div>
+        <div class="fal" id="falWrap">
+          <canvas id="fal" role="img"
+            aria-label="Üstten görünen bir fincan Türk kahvesi — köpüğü ağır ağır dönüyor, imleçle karışıyor"></canvas>
+          <div class="fal__steam" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
       </div>
-      <p class="scrollhint">Kaydır — kahve aksın</p>
+      <p class="scrollhint">Kaydır — kahve karışsın</p>
     </section>
     <div class="strip" aria-hidden="true">
       <div class="strip__row">
@@ -1944,16 +1876,7 @@
           </div>
         </div>
       </div>
-
-    </section>
-    <section class="dolum" id="dolum">
-      <p class="label rv">Son durak</p>
-      <div class="fal" id="falWrap">
-        <canvas id="fal" role="img"
-          aria-label="Sayfa boyunca akan kahve bu fincanı dolduruyor — dolunca köpüğü imleçle karıştırabilirsiniz"></canvas>
-        <div class="fal__steam" aria-hidden="true"><i></i><i></i><i></i></div>
-      </div>
-      <p class="dolum__not" id="dolumNot">Kahveniz hazır — bekleriz.</p>
+      
     </section>
   </main>
   <footer class="foot">
@@ -1971,368 +1894,6 @@
     </a>
   </nav>
 
-  <!-- ================= çekirdekten fincana: akış katmanı (WebGL) =================
-       Hero'da asılı duran çekirdekler kaydırınca akışın ucuna dökülür; kahve şeridi
-       SADECE kaydırdıkça akar (kendi kendine hareket yok), sayfanın dibinde fincana
-       varır ve fincan dolar. Her şey kod — görsel dosyası yok. -->
-  <script>
-    (function () {
-      var cv = document.getElementById('yol');
-      if (!cv) return;
-      var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      function vazgec() {
-        document.documentElement.classList.add('no-yol');
-        if (cv.parentNode) cv.parentNode.removeChild(cv);
-      }
-      var gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true });
-      if (!gl) { vazgec(); return; }
-      try {
-        var ORTAK = [
-          'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
-          'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
-          ' return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}',
-          'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p=p*2.03+vec2(11.7,7.3);a*=.5;}return v;}'
-        ].join('\n');
-        var VT = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
-        var VB = 'attribute vec2 a;uniform vec2 R;uniform vec2 C;uniform float SZ;varying vec2 vu;' +
-          'void main(){vu=a;vec2 px=C+a*SZ;gl_Position=vec4(px.x/R.x*2.-1.,1.-px.y/R.y*2.,0.,1.);}';
-        /* --- akış: dünya-uzayında şerit; konum yolu 256 örnekli dokuda --- */
-        var FA = [
-          'precision highp float;',
-          'uniform vec2 R;uniform float DP;uniform float SY;uniform float Y0;uniform float Y1;',
-          'uniform float HD;uniform float W0;uniform float FL;uniform vec2 PT;uniform float PE;',
-          'uniform vec3 CUP;uniform float FI;uniform sampler2D PA;',
-          ORTAK,
-          'void main(){',
-          ' vec2 sp=vec2(gl_FragCoord.x/DP,R.y-gl_FragCoord.y/DP);',
-          ' float wy=sp.y+SY;',
-          ' float u=(wy-Y0)/max(1.,Y1-Y0);',
-          ' if(u<-.02||u>1.1){gl_FragColor=vec4(0.);return;}',
-          ' vec4 pa=texture2D(PA,vec2(clamp(u,.004,.996),.5));',
-          ' float cx=pa.r*R.x;',
-          ' float dx=sp.x-cx;',
-          ' if(abs(dx)>W0*6.+240.){gl_FragColor=vec4(0.);return;}',
-          ' vec2 dv=sp-PT;float pl=exp(-dot(dv,dv)/2600.)*PE;',
-          ' float hf=W0*pa.g*(.78+.30*fbm(vec2(wy*.004-FL*.002,4.2)))+pl*9.;',
-          ' float shr=smoothstep(26.,-170.,wy-HD);',
-          ' hf*=(.30+.70*shr);',
-          ' float cut=smoothstep(30.,-4.,wy-HD);',
-          ' float med=(fbm(vec2(wy*.0026+FL*.0012,7.3))-.5)*W0*1.5;',
-          ' float d2=abs(dx+med)-hf;',
-          ' d2+=(fbm(vec2(wy*.02-FL*.006,dx*.045))-.5)*7.;',
-          ' float m=(1.-smoothstep(-1.4,1.4,d2))*cut;',
-          ' m*=smoothstep(-70.,90.,wy-Y0);',
-          ' float dcup=distance(sp,vec2(CUP.x,CUP.y-SY));',
-          ' float kf=smoothstep(CUP.z*.30,CUP.z*.78,dcup);',
-          ' m*=kf;',
-          ' float q=clamp((dx+med)/max(hf,1.),-1.2,1.2);',
-          ' float st=fbm(vec2(dx*.05,(wy+FL*1.35)*.012));',
-          ' float st2=fbm(vec2(dx*.11+3.,(wy+FL*1.35)*.03));',
-          ' vec3 koyu=vec3(.05,.024,.01),orta=vec3(.24,.12,.048),krem=vec3(.62,.39,.17),ack=vec3(.92,.65,.32);',
-          ' vec3 col=mix(orta*1.12,krem,smoothstep(.30,.85,st));',
-          ' col=mix(col,koyu,smoothstep(.55,.15,st)*.55);',
-          ' col=mix(col,ack,smoothstep(.62,.95,st2)*.40);',
-          ' float spc=exp(-pow((q+.34)/.16,2.))*(.45+.55*st2);',
-          ' col+=ack*spc*.55;',
-          ' col+=vec3(1.,.92,.75)*pow(max(0.,1.-abs(q+.34)*3.4),9.)*.38;',
-          ' col=mix(col,krem*1.06,smoothstep(.60,.97,abs(q))*.5);',
-          ' col*=.66+.55*sqrt(max(0.,1.-q*q));',
-          ' col+=vec3(1.,.8,.5)*pl*.14;',
-          ' float dr=0.;',
-          ' for(int i=0;i<6;i++){float fi=float(i);',
-          '  float hs=h(vec2(fi,7.7));',
-          '  float pr=fract(hs+HD*.0021+fi*.163);',
-          '  vec2 dp2=vec2(cx+(h(vec2(fi,3.1))-.5)*W0*4.*pr,(HD-SY)+14.+pr*95.);',
-          '  float rr=(3.+3.*hs)*(1.-pr*.8);',
-          '  dr=max(dr,1.-smoothstep(rr-1.2,rr+1.2,distance(sp,dp2)));}',
-          ' dr*=step(Y0+40.,HD)*step(HD,Y1-10.);',
-          ' float spl=0.;',
-          ' if(FI>.005&&FI<.97){',
-          '  for(int i=0;i<7;i++){float fi=float(i);',
-          '   float a2=fi/7.*6.283+h(vec2(fi,9.))*1.3;',
-          '   float pr=fract(h(vec2(fi,4.))+FI*2.3);',
-          '   float rad2=CUP.z*(.5+pr*.85);',
-          '   vec2 ps=vec2(CUP.x+cos(a2)*rad2,(CUP.y-SY)+sin(a2)*rad2*.4-pr*(1.-pr)*40.);',
-          '   float rr=(2.+2.6*h(vec2(fi,2.)))*(1.-pr*.7);',
-          '   spl=max(spl,1.-smoothstep(rr-1.1,rr+1.1,distance(sp,ps)));}}',
-          ' float dsh=abs(dx+med-9.)-hf;',
-          ' float m2=(1.-smoothstep(-1.,10.,dsh))*cut*smoothstep(-70.,90.,wy-Y0)*kf;',
-          ' float sh=max(0.,m2-m)*.32;',
-          ' vec3 dcol=mix(orta*1.25,ack,.25);',
-          ' float A=max(m,max(dr,spl));',
-          ' vec3 rgb=col*m+dcol*max(dr,spl)*(1.-m);',
-          ' float outa=clamp(A+sh*(1.-A),0.,1.);',
-          ' gl_FragColor=vec4(rgb,outa);',
-          '}'
-        ].join('\n');
-        /* --- çekirdek: küçük karede gerçek 3B (SDF raymarch) --- */
-        var FB = [
-          'precision highp float;varying vec2 vu;',
-          'uniform mat3 M;uniform float AL;uniform float WET;uniform float SH;uniform float HU;',
-          ORTAK,
-          'float sdE(vec3 p,vec3 r){float k0=length(p/r);float k1=length(p/(r*r));return k0*(k0-1.)/max(k1,1e-4);}',
-          'float mp(vec3 p){p=M*p;p.z=-p.z;p.y+=.13*sin(p.x*1.9);',
-          ' p.z*=1.+.16*smoothstep(0.,.5,p.z);',
-          ' float d=sdE(p,vec3(.92,.60,.44));',
-          ' vec3 q=p-vec3(0.,0.,.34);q.y*=1.9;',
-          ' return max(d,-sdE(q,vec3(1.05,.30,.42)));}',
-          'vec3 nr(vec3 p){vec2 e=vec2(.014,0.);',
-          ' return normalize(vec3(mp(p+e.xyy)-mp(p-e.xyy),mp(p+e.yxy)-mp(p-e.yxy),mp(p+e.yyx)-mp(p-e.yyx)));}',
-          'void main(){',
-          ' vec3 ro=vec3(vu*1.5,-2.2),rd=vec3(0.,0.,1.);',
-          ' float t=0.,mind=9.;vec3 p=ro;bool hit=false;',
-          ' for(int i=0;i<40;i++){p=ro+rd*t;float d=mp(p);mind=min(mind,d);',
-          '  if(d<.006){hit=true;break;}t+=max(d*.9,.012);if(t>4.4)break;}',
-          ' if(!hit){float a=(1.-smoothstep(.0,.09,mind))*.5*AL;',
-          '  if(a<.005)discard;gl_FragColor=vec4(vec3(.12,.065,.03)*a,a);return;}',
-          ' vec3 nn=nr(p);vec3 pm=M*p;pm.z=-pm.z;',
-          ' pm.z*=1.+.16*smoothstep(0.,.5,pm.z);',
-          ' float spk=n(pm.xy*8.+vec2(pm.z*3.,pm.z*5.));',
-          ' vec3 alb=mix(vec3(.22,.12,.06),vec3(.46,.27,.135),spk*.75+HU*.25);',
-          ' float fr=pow(1.-abs(nn.z),2.);',
-          ' alb=mix(alb,vec3(.58,.35,.175),fr*.5);',
-          ' vec3 q2=pm-vec3(0.,0.,.34);q2.y*=1.9;',
-          ' float cd=sdE(q2,vec3(1.05,.30,.42));',
-          ' alb*=mix(.35,1.,smoothstep(.0,.2,cd));',
-          ' alb*=mix(1.,.5,WET);',
-          ' vec3 L=normalize(vec3(-.45,.75,-.55));',
-          ' float df=max(0.,dot(nn,L))*.9+.22;',
-          ' float s2=pow(max(0.,dot(reflect(-L,nn),-rd)),30.)*(.5+.6*WET);',
-          ' vec3 col=alb*df+vec3(1.,.94,.85)*s2;',
-          ' col+=vec3(.91,.66,.31)*pow(1.-abs(nn.z),3.)*.30;',
-          ' col*=SH;',
-          ' gl_FragColor=vec4(col*AL,AL);',
-          '}'
-        ].join('\n');
-
-        function der(tip, src) {
-          var o = gl.createShader(tip);
-          gl.shaderSource(o, src); gl.compileShader(o);
-          if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) return null;
-          return o;
-        }
-        function prg(vsS, fsS, us) {
-          var v = der(gl.VERTEX_SHADER, vsS), f = der(gl.FRAGMENT_SHADER, fsS);
-          if (!v || !f) return null;
-          var p = gl.createProgram();
-          gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
-          if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
-          var o = { p: p, a: gl.getAttribLocation(p, 'a'), u: {} };
-          for (var i = 0; i < us.length; i++) o.u[us[i]] = gl.getUniformLocation(p, us[i]);
-          return o;
-        }
-        var pS = prg(VT, FA, ['R', 'DP', 'SY', 'Y0', 'Y1', 'HD', 'W0', 'FL', 'PT', 'PE', 'CUP', 'FI', 'PA']);
-        var pB = prg(VB, FB, ['R', 'C', 'SZ', 'M', 'AL', 'WET', 'SH', 'HU']);
-        if (!pS || !pB) { vazgec(); return; }
-        var bTri = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bTri);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-        var bQuad = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bQuad);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-        var texP = gl.createTexture();
-        gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
-        var hero = document.querySelector('.hero'), tane = document.getElementById('taneAlan'),
-          fw = document.getElementById('falWrap'), dol = document.querySelector('.dolum');
-        if (!hero || !tane || !fw || !dol) { vazgec(); return; }
-        var secQ = ['.intro', '.menu', '.brew', '.space', '.visit'].map(function (q) { return document.querySelector(q); });
-
-        var VW = 0, VH = 0, DPR = 1, maxS = 1, Y0 = 0, Y1 = 1, falTop = 0, den = 1, baseW = 30;
-        var cup = { x: 0, y: 0, r: 0 }, taneR = { x: 0, y: 0, w: 1, h: 1 };
-        var pathXs = new Float32Array(256), beans = [];
-
-        function srnd(i, k) { var x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); }
-        function cr(ks, y, ix) { /* Catmull-Rom */
-          var nn = ks.length;
-          if (y <= ks[0][0]) return ks[0][ix];
-          if (y >= ks[nn - 1][0]) return ks[nn - 1][ix];
-          var i = 0; while (i < nn - 2 && ks[i + 1][0] < y) i++;
-          var p0 = ks[Math.max(0, i - 1)], p1 = ks[i], p2 = ks[i + 1], p3 = ks[Math.min(nn - 1, i + 2)];
-          var t = (y - p1[0]) / Math.max(1, p2[0] - p1[0]), t2 = t * t, t3 = t2 * t;
-          return .5 * ((2 * p1[ix]) + (-p0[ix] + p2[ix]) * t + (2 * p0[ix] - 5 * p1[ix] + 4 * p2[ix] - p3[ix]) * t2 + (-p0[ix] + 3 * p1[ix] - 3 * p2[ix] + p3[ix]) * t3);
-        }
-        function mat3e(ax, ay, az) {
-          var ca = Math.cos(ax), sa = Math.sin(ax), cb = Math.cos(ay), sb = Math.sin(ay), cc = Math.cos(az), sc = Math.sin(az);
-          return new Float32Array([cb * cc, cc * sa * sb - ca * sc, ca * cc * sb + sa * sc,
-            cb * sc, ca * cc + sa * sb * sc, -cc * sa + ca * sb * sc, -sb, cb * sa, ca * cb]);
-        }
-        function kur() { /* çekirdekler — tohumlu: boyut değişse de aynı serpinti */
-          var NB = VW < 900 ? 9 : 15; beans = [];
-          for (var i = 0; i < NB; i++) {
-            var z = .55 + srnd(i, 3) * .85;
-            var fx = (i * .6180339887 + .21) % 1, fy = (i * .3819660113 + .13) % 1;
-            beans.push({
-              x: taneR.x + ((fx * .88 + srnd(i, 1) * .12) * 1.5 - .27) * taneR.w,
-              y: taneR.y + ((fy * .88 + srnd(i, 2) * .12) * 1.3 - .14) * taneR.h,
-              z: z, sz: (VW < 900 ? 20 + srnd(i, 4) * 16 : 30 + srnd(i, 4) * 30) * z,
-              a: (srnd(i, 5) - .5) * .7, b: (srnd(i, 6) - .5) * .7, c: srnd(i, 7) * 6.28,
-              ph: srnd(i, 8) * 6.28, hu: srnd(i, 9), st: srnd(i, 10)
-            });
-          }
-        }
-        function metrics() {
-          VW = innerWidth; VH = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
-          var bw = Math.round(VW * DPR), bh = Math.round(VH * DPR);
-          if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
-          gl.viewport(0, 0, cv.width, cv.height);
-          var sy = scrollY;
-          maxS = Math.max(1, document.body.scrollHeight - VH);
-          var hr = hero.getBoundingClientRect(), tr = tane.getBoundingClientRect(), fr = fw.getBoundingClientRect();
-          taneR = { x: tr.left, y: tr.top + sy, w: tr.width, h: tr.height };
-          falTop = fr.top + sy;
-          cup = { x: fr.left + fr.width / 2, y: falTop + fr.height * .35, r: fr.width / 2 };
-          den = Math.max(80, VH - (falTop - maxS));
-          Y0 = hr.bottom + sy - 30; Y1 = cup.y;
-          var pad = VW < 900 ? 20 : Math.min(72, Math.max(40, VW * .05));
-          var cw = Math.min(VW - 2 * pad, 1200), crx = (VW + cw) / 2, gut = VW - crx;
-          var gx;
-          if (VW < 900) { gx = VW - 10; baseW = 18; }
-          else if (gut >= 70) { gx = crx + gut * .48; baseW = Math.min(40, Math.max(24, gut * .30)); }
-          else { gx = VW - Math.max(26, gut * .5); baseW = 26; }
-          var dr2 = dol.getBoundingClientRect(), dolTop = dr2.top + sy;
-          var tcx = taneR.x + taneR.w / 2;
-          /* oluğa varış, giriş bölümünün içeriği başlamadan bitsin */
-          var introTop = secQ[0] ? secQ[0].getBoundingClientRect().top + sy : Y0 + VH * .4;
-          var ks = [[Y0 - 260, tcx, 0], [Y0 + 10, tcx, .5],
-            [Y0 + (introTop - Y0) * .5, tcx * .45 + gx * .55, .85],
-            [Math.max(introTop - 30, Y0 + 120), gx, 1]];
-          for (var i = 0; i < secQ.length; i++) {
-            var s3 = secQ[i]; if (!s3) continue;
-            var r3 = s3.getBoundingClientRect(), mid = r3.top + sy + r3.height / 2;
-            if (mid > Y0 + VH * .7 && mid < dolTop - VH * .2)
-              ks.push([mid, gx + ((i % 2) ? -1 : 1) * Math.min(18, baseW * .5), .85 + .15 * (i % 2)]);
-          }
-          ks.push([dolTop + 20, gx * .75 + cup.x * .25, .9]);
-          ks.push([Y1 - 170, cup.x + (gx > cup.x ? 26 : -26), .8]);
-          ks.push([Y1 - 20, cup.x, .6]);
-          ks.push([Y1 + 120, cup.x, .35]);
-          ks.sort(function (a, b) { return a[0] - b[0]; });
-          var N = 256, data = new Uint8Array(N * 4);
-          for (var s4 = 0; s4 < N; s4++) {
-            var wy = Y0 + (Y1 - Y0) * s4 / (N - 1);
-            var xx = cr(ks, wy, 1), ww = Math.max(0, Math.min(1, cr(ks, wy, 2)));
-            pathXs[s4] = xx;
-            data[s4 * 4] = Math.max(0, Math.min(255, Math.round(xx / VW * 255)));
-            data[s4 * 4 + 1] = Math.round(ww * 255); data[s4 * 4 + 2] = 255; data[s4 * 4 + 3] = 255;
-          }
-          gl.bindTexture(gl.TEXTURE_2D, texP);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-          kur();
-          prevR = [0, 0, VW, VH]; /* boyut değişti: bir kez tam temizlik */
-        }
-
-        var px2 = innerWidth / 2, py2 = innerHeight * .4, tx2 = px2, ty2 = py2, son = -1e9, etki = 0;
-        addEventListener('pointermove', function (e) { tx2 = e.clientX; ty2 = e.clientY; son = performance.now(); }, { passive: true });
-        var prevR = null, raf = 0;
-        function unionR(a, b) {
-          if (!a) return b; if (!b) return a;
-          var x1 = Math.min(a[0], b[0]), y1 = Math.min(a[1], b[1]),
-            x2 = Math.max(a[0] + a[2], b[0] + b[2]), y2 = Math.max(a[1] + a[3], b[1] + b[3]);
-          return [x1, y1, x2 - x1, y2 - y1];
-        }
-        function ciz(t) {
-          raf = 0;
-          var s = scrollY, p2 = Math.min(1, s / maxS);
-          var HD = reduce ? Y1 : ((Y0 - 150) + (Y1 - (Y0 - 150)) * p2);
-          var g = reduce ? 1 : Math.min(1, Math.max(0, (HD - (Y1 - VH * 1.15)) / (VH * 1.15)));
-          var f0 = Math.min(1, Math.max(0, (VH - (falTop - s)) / den));
-          var FI = Math.min(f0, g);
-          window.__evimAkis = { g: g };
-          etki += ((performance.now() - son < 1500 ? 1 : 0) - etki) * .05;
-          px2 += (tx2 - px2) * .08; py2 += (ty2 - py2) * .08;
-          var cur = null;
-          var wa = Math.max(Y0 - 90, s), wb = Math.min(HD + 150, Math.min(Y1 + 170, s + VH));
-          if (wb > wa) {
-            var ua = (wa - Y0) / (Y1 - Y0), ub = (wb - Y0) / (Y1 - Y0);
-            var i0 = Math.max(0, Math.floor(ua * 255)), i1 = Math.min(255, Math.ceil(ub * 255));
-            var mn = 1e9, mx = -1e9;
-            for (var i = i0; i <= i1; i++) { mn = Math.min(mn, pathXs[i]); mx = Math.max(mx, pathXs[i]); }
-            var padx = baseW * 2.6 + 90;
-            cur = [mn - padx, wa - s - 20, (mx - mn) + padx * 2, (wb - wa) + 40];
-          }
-          var cizilecek = [];
-          var tipU = Math.max(0, Math.min(1, (HD - Y0) / (Y1 - Y0)));
-          var tipX = pathXs[Math.round(tipU * 255)] || VW / 2;
-          for (var i2 = 0; i2 < beans.length; i2++) {
-            var b2 = beans[i2];
-            var di = reduce ? 0 : Math.max(0, Math.min(1, (s * (0.8 + b2.z * .5) - b2.st * VH * .22) / (VH * .85)));
-            var al = 1 - Math.max(0, Math.min(1, (di - .72) / .26));
-            if (al <= .01) continue;
-            var ei = di * di * (3 - 2 * di);
-            var bx = b2.x + (px2 - VW / 2) * .018 * (b2.z - .9) * (1 - di);
-            var by = b2.y - s + (reduce ? 0 : Math.sin(t * .0006 + b2.ph) * 2.6 * b2.z * (1 - di));
-            bx = bx + (tipX - bx) * ei;
-            by = by + (((HD - s) - 30) - by) * ei;
-            var sc = b2.sz * (1 - .45 * ei);
-            if (by < -90 || by > VH + 90) continue;
-            cizilecek.push([bx, by, sc, b2, di, al]);
-            cur = unionR(cur, [bx - sc * 1.8, by - sc * 1.8, sc * 3.6, sc * 3.6]);
-          }
-          if (FI > .005 && FI < .97) cur = unionR(cur, [cup.x - cup.r * 1.7, (cup.y - s) - cup.r, cup.r * 3.4, cup.r * 2.2]);
-          var alan = unionR(cur, prevR); prevR = cur;
-          if (alan) {
-            var sx = Math.max(0, Math.floor(alan[0] * DPR)), sy2 = Math.max(0, Math.floor((VH - alan[1] - alan[3]) * DPR));
-            var sw = Math.min(cv.width - sx, Math.ceil(alan[2] * DPR)), sh2 = Math.min(cv.height - sy2, Math.ceil(alan[3] * DPR));
-            if (sw > 0 && sh2 > 0) {
-              gl.enable(gl.SCISSOR_TEST); gl.scissor(sx, sy2, sw, sh2);
-              gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-              if (cur) {
-                gl.useProgram(pS.p);
-                gl.bindBuffer(gl.ARRAY_BUFFER, bTri);
-                gl.enableVertexAttribArray(pS.a); gl.vertexAttribPointer(pS.a, 2, gl.FLOAT, false, 0, 0);
-                gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texP); gl.uniform1i(pS.u.PA, 0);
-                gl.uniform2f(pS.u.R, VW, VH); gl.uniform1f(pS.u.DP, DPR); gl.uniform1f(pS.u.SY, s);
-                gl.uniform1f(pS.u.Y0, Y0); gl.uniform1f(pS.u.Y1, Y1); gl.uniform1f(pS.u.HD, HD);
-                gl.uniform1f(pS.u.W0, baseW); gl.uniform1f(pS.u.FL, s);
-                gl.uniform2f(pS.u.PT, px2, py2); gl.uniform1f(pS.u.PE, etki);
-                gl.uniform3f(pS.u.CUP, cup.x, cup.y, cup.r); gl.uniform1f(pS.u.FI, FI);
-                gl.drawArrays(gl.TRIANGLES, 0, 3);
-                if (cizilecek.length) {
-                  gl.useProgram(pB.p);
-                  gl.bindBuffer(gl.ARRAY_BUFFER, bQuad);
-                  gl.enableVertexAttribArray(pB.a); gl.vertexAttribPointer(pB.a, 2, gl.FLOAT, false, 0, 0);
-                  gl.uniform2f(pB.u.R, VW, VH);
-                  for (var k2 = 0; k2 < cizilecek.length; k2++) {
-                    var e2 = cizilecek[k2], b3 = e2[3];
-                    var rs = s * .0021 * (0.6 + b3.z * .6) + e2[4] * 2.2;
-                    gl.uniformMatrix3fv(pB.u.M, false, mat3e(b3.a + rs, b3.b + rs * .7, b3.c));
-                    gl.uniform2f(pB.u.C, e2[0], e2[1]); gl.uniform1f(pB.u.SZ, e2[2]);
-                    gl.uniform1f(pB.u.AL, e2[5]); gl.uniform1f(pB.u.WET, e2[4] > .5 ? (e2[4] - .5) * 2 : 0);
-                    gl.uniform1f(pB.u.SH, .75 + .45 * (b3.z - .55) / .85); gl.uniform1f(pB.u.HU, b3.hu);
-                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-                  }
-                }
-              }
-              gl.disable(gl.SCISSOR_TEST);
-            }
-          }
-          if (!reduce && !document.hidden) raf = requestAnimationFrame(ciz);
-        }
-        metrics();
-        if (reduce) {
-          var tk = false;
-          addEventListener('scroll', function () {
-            if (!tk) { tk = true; requestAnimationFrame(function (t) { tk = false; ciz(t); }); }
-          }, { passive: true });
-          requestAnimationFrame(ciz);
-        } else {
-          raf = requestAnimationFrame(ciz);
-          addEventListener('visibilitychange', function () {
-            if (!document.hidden && !raf) raf = requestAnimationFrame(ciz);
-          });
-        }
-        addEventListener('resize', function () { metrics(); if (reduce) requestAnimationFrame(ciz); });
-        if (typeof ResizeObserver !== 'undefined')
-          new ResizeObserver(function () { metrics(); if (reduce) requestAnimationFrame(ciz); }).observe(document.body);
-      } catch (e) { vazgec(); }
-    })();
-  </script>
-
   <!-- ================= kahve falı (WebGL köpük girdabı) ================= -->
   <script>
     (function () {
@@ -2348,7 +1909,7 @@
       var VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
       var FS = [
         'precision highp float;',
-        'uniform vec2 R;uniform float T;uniform float S;uniform float G;uniform vec2 P;uniform float E;uniform float F;',
+        'uniform vec2 R;uniform float T;uniform float S;uniform float G;uniform vec2 P;uniform float E;',
         'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
         'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
         ' return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}',
@@ -2358,12 +1919,8 @@
         ' vec2 p=(gl_FragCoord.xy-.5*R)/(.5*min(R.x,R.y));',
         ' float r=length(p);',
         ' float px=2./min(R.x,R.y);',
-        ' float FF=smoothstep(0.,.92,F);',
-        ' float rad=mix(-.05,.90,FF);',
-        ' float act=smoothstep(.02,.10,F)*(1.-smoothstep(.88,.99,F));',
-        ' vec2 C=vec2(0.,.30);float dc=length(p-C);',
         ' vec2 d=p-P;float loc=exp(-dot(d,d)*7.);',
-        ' float ang=(T*.022+S*5.5+(1.-r)*(1.75+S*2.2))*mix(.3,1.,FF)+loc*1.5*E;',
+        ' float ang=T*.022+S*5.5+(1.-r)*(1.75+S*2.2)+loc*1.5*E;',
         ' vec2 q=rot(ang)*p;',
         ' float f1=fbm(q*2.2+vec2(T*.009,-T*.007));',
         ' float f2=fbm(q*vec2(1.6,3.9)+f1*2.3-vec2(T*.006,T*.009));',
@@ -2372,7 +1929,6 @@
         ' vec3 koyu=vec3(.050,.024,.010),orta=vec3(.225,.114,.045);',
         ' vec3 krem=vec3(.60,.375,.16),ack=vec3(.90,.63,.31);',
         ' float m=smoothstep(.38,.82,f2);',
-        ' m*=smoothstep(.12,.72,FF);',
         ' vec3 col=mix(koyu,orta,smoothstep(.22,.78,f1));',
         ' col=mix(col,krem,m*.8);',
         ' col=mix(col,ack,smoothstep(.7,.95,f3)*m*.55);',
@@ -2382,16 +1938,7 @@
         ' vec2 L=vec2(-.42,.5);',
         ' col*=.88+.30*exp(-dot(p-L,p-L)*1.5);',
         ' col+=.09*loc*E*vec3(1.,.82,.5);',
-        ' col*=1.-.5*smoothstep(rad*.8,rad*.98,r);',
-        ' float ac2=atan(p.y,p.x);',
-        ' float wob=(.012*sin(ac2*7.-FF*26.)+.006*sin(ac2*13.+FF*31.))*(1.-FF*.85)*clamp(rad*2.5,0.,1.);',
-        ' float likM=1.-smoothstep(rad-.012,rad+.016,r+wob);',
-        ' col+=sin(dc*34.-FF*70.)*exp(-dc*4.2)*act*.07;',
-        ' col=mix(col,vec3(.045,.02,.008),exp(-dc*dc*9.)*act*.5);',
-        ' vec3 ic=vec3(.63,.585,.51)*(.66+.34*smoothstep(0.,.88,r));',
-        ' ic*=1.-.22*exp(-r*r*3.5);',
-        ' ic+=vec3(.30,.17,.06)*.05*fbm(p*9.);',
-        ' col=mix(ic,col,likM);',
+        ' col*=1.-.5*smoothstep(.72,.9,r);',
         ' vec3 pors=vec3(.845,.805,.73);',
         ' float duvar=smoothstep(.895,.905,r);',
         ' float aci=atan(p.y,p.x);',
@@ -2428,8 +1975,7 @@
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       var uR = gl.getUniformLocation(pr, 'R'), uT = gl.getUniformLocation(pr, 'T'),
         uS = gl.getUniformLocation(pr, 'S'), uG = gl.getUniformLocation(pr, 'G'),
-        uP = gl.getUniformLocation(pr, 'P'), uE = gl.getUniformLocation(pr, 'E'),
-        uF = gl.getUniformLocation(pr, 'F');
+        uP = gl.getUniformLocation(pr, 'P'), uE = gl.getUniformLocation(pr, 'E');
 
       function fit() {
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -2448,31 +1994,14 @@
       addEventListener('pointermove', hedefle, { passive: true });
       addEventListener('pointerdown', hedefle, { passive: true });
 
-      /* dolum: fincan görünüme girince başlar, sayfanın dibinde tamamlanır.
-         Akış katmanı varsa kahve teli fincana varmadan dolum başlamaz (g kapısı). */
-      var stir = 0, gun = 0, F = 0, falTop = 0, den = 1;
-      var not = document.getElementById('dolumNot');
-      function olc() {
-        var r = wrap.getBoundingClientRect();
-        falTop = r.top + scrollY;
-        var mx = document.body.scrollHeight - innerHeight;
-        den = Math.max(120, innerHeight * .9 - (falTop - mx));
-      }
-      function guncelle() {
+      var stir = 0, gun = 0;
+      function onScroll() {
         var mx = document.body.scrollHeight - innerHeight;
         gun = mx > 0 ? Math.min(1, Math.max(0, scrollY / mx)) : 0;
-        var f0 = Math.min(1, Math.max(0, (innerHeight * .9 - (falTop - scrollY)) / den));
-        var ak = window.__evimAkis;
-        F = (ak && ak.g != null) ? Math.min(f0, ak.g) : f0;
-        if (reduce) F = 1;
-        stir = .15 + .25 * F;
-        if (steam) steam.style.opacity = reduce ? 1 : Math.max(0, Math.min(1, (F - .85) / .13));
-        if (not) not.classList.toggle('tam', F > .96);
+        stir = Math.min(1, scrollY / (innerHeight * 0.9));
+        if (steam) steam.style.opacity = reduce ? 1 : Math.max(0, Math.min(1, (stir - .1) / .3));
       }
-      var onScroll = guncelle;
       addEventListener('scroll', onScroll, { passive: true });
-      if (typeof ResizeObserver !== 'undefined')
-        new ResizeObserver(function () { olc(); onScroll(); }).observe(document.body);
 
       var gorunur = true, raf = 0;
       new IntersectionObserver(function (es) {
@@ -2487,7 +2016,6 @@
       function ciz(t) {
         raf = 0;
         fit();
-        guncelle(); /* dolum akış katmanının kapısıyla her karede eşitlenir */
         /* imleç durunca kaşık etkisi yerinde eriyip kaybolur — kendi kendine gezinmez */
         etki += ((performance.now() - son < 1500 ? 1 : 0) - etki) * .05;
         px += (tx - px) * .06; py += (ty - py) * .06;
@@ -2497,26 +2025,23 @@
         gl.uniform1f(uG, gun);
         gl.uniform2f(uP, px, py);
         gl.uniform1f(uE, etki);
-        gl.uniform1f(uF, F);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         if (!reduce && gorunur && !document.hidden) raf = requestAnimationFrame(ciz);
       }
 
-      fit(); olc(); onScroll();
+      fit(); onScroll();
       if (reduce) {
         px = .3; py = .2;
         gl.uniform2f(uR, cv.width, cv.height);
         gl.uniform1f(uT, 13.0); gl.uniform1f(uS, .4); gl.uniform1f(uG, .3);
         gl.uniform2f(uP, px, py);
         gl.uniform1f(uE, 0.0);
-        gl.uniform1f(uF, 1.0);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
-        if (not) not.classList.add('tam');
       } else {
         raf = requestAnimationFrame(ciz);
       }
       cv.classList.add('is-ready');
-      addEventListener('resize', function () { fit(); olc(); onScroll(); });
+      addEventListener('resize', fit);
     })();
   </script>
 
@@ -2529,7 +2054,7 @@
       const tap = n => { if (navigator.vibrate) navigator.vibrate(n); };
       /* ---- lamba ışığı ---- */
       const glow = document.getElementById('glow');
-      let tx = innerWidth * (innerWidth < 900 ? .5 : .68), ty = innerHeight * 0.42, gx = tx, gy = ty, held = 0;
+      let tx = innerWidth / 2, ty = innerHeight * 0.4, gx = tx, gy = ty, held = 0;
       function setTarget(x, y) { tx = x; ty = y; root.style.setProperty('--mx', x + 'px'); root.style.setProperty('--my', y + 'px'); }
       addEventListener('pointermove', e => { held = performance.now(); setTarget(e.clientX, e.clientY); }, { passive: true });
       addEventListener('pointerdown', e => { held = performance.now(); setTarget(e.clientX, e.clientY); }, { passive: true });
@@ -2555,6 +2080,7 @@
         }, { passive: true });
       }
       /* ---- günün saati + paralaks ---- */
+      const falWrap = document.getElementById('falWrap');
       const navEl = document.querySelector('.nav');
       const frames = [...document.querySelectorAll('.frame__img')];
       const bar = document.getElementById('bar');
@@ -2572,6 +2098,10 @@
             const c = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
             f.style.transform = `translate3d(0,${c * parseFloat(f.dataset.speed) * -120}px,0)`;
           });
+          if (falWrap && scrollY < innerHeight * 1.25) {
+            const g = Math.min(1, scrollY / innerHeight);
+            falWrap.style.transform = `translate3d(0,${g * 46}px,0) scale(${1 - g * .05}) rotate(${g * 10}deg)`;
+          }
         }
         ticking = false;
       }
