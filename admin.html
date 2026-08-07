@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Ev'im Kafe — Menü Paneli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --gece: #17110E;
+      --kart: #211915;
+      --lamba: #E8A94F;
+      --tebeser: #E9E3D7;
+      --mute: #ABA093;
+      --hata: #C2542F;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    body {
+      background: var(--gece);
+      color: var(--tebeser);
+      font-family: "Instrument Sans", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      padding: 0 16px 90px;
+    }
+
+    .ust {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 6px;
+    }
+
+    .marka {
+      font-family: "Bricolage Grotesque", sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -.02em;
+    }
+
+    .marka small {
+      display: block;
+      font-family: var(--mono);
+      font-weight: 400;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--lamba);
+      margin-top: 2px;
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .kart {
+      background: var(--kart);
+      border: 1px solid rgba(233, 227, 215, .10);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    h2 {
+      font-family: "Bricolage Grotesque", sans-serif;
+      font-size: 22px;
+      letter-spacing: -.02em;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--mute);
+      margin: 12px 0 5px;
+    }
+
+    input[type=email],
+    input[type=password],
+    input[type=text],
+    input[type=number] {
+      width: 100%;
+      background: #171059;
+      background: rgba(23, 17, 14, .8);
+      border: 1px solid rgba(233, 227, 215, .18);
+      border-radius: 9px;
+      color: var(--tebeser);
+      font: inherit;
+      padding: 10px 12px;
+    }
+
+    input:focus {
+      outline: 2px solid var(--lamba);
+      outline-offset: 1px;
+    }
+
+    button {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      border-radius: 99px;
+      border: 1px solid rgba(233, 227, 215, .25);
+      background: none;
+      color: var(--tebeser);
+      padding: 9px 16px;
+      cursor: pointer;
+      min-height: 38px;
+    }
+
+    button.dolu {
+      background: var(--lamba);
+      border-color: var(--lamba);
+      color: var(--gece);
+      font-weight: 600;
+    }
+
+    button.kucuk {
+      padding: 5px 10px;
+      min-height: 30px;
+      font-size: 10px;
+    }
+
+    button.tehlike {
+      border-color: rgba(194, 84, 47, .5);
+      color: #E08A66;
+    }
+
+    button:active {
+      transform: scale(.96);
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: default;
+    }
+
+    .satirlar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* kategori */
+    .kat {
+      margin-top: 18px;
+      border: 1px solid rgba(233, 227, 215, .10);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .kat.kapali .icerik {
+      display: none;
+    }
+
+    .kat__bas {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: var(--kart);
+      padding: 10px 12px;
+      flex-wrap: wrap;
+    }
+
+    .kat__bas input[type=text] {
+      flex: 1;
+      min-width: 140px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .icerik {
+      padding: 4px 12px 14px;
+    }
+
+    .urun {
+      display: grid;
+      grid-template-columns: 1fr 84px auto;
+      gap: 8px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(233, 227, 215, .10);
+    }
+
+    .urun__metin {
+      display: grid;
+      gap: 6px;
+    }
+
+    .urun__metin input:first-child {
+      font-weight: 600;
+    }
+
+    .urun__metin input:last-child {
+      font-size: 13px;
+      color: var(--mute);
+    }
+
+    .urun .islem {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pasif {
+      opacity: .45;
+    }
+
+    .rozet {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gece);
+      background: var(--mute);
+      border-radius: 99px;
+      padding: 2px 8px;
+    }
+
+    .not {
+      font-size: 13px;
+      color: var(--mute);
+      margin-top: 8px;
+    }
+
+    .hata {
+      color: #E08A66;
+    }
+
+    #durum {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(70px);
+      background: var(--lamba);
+      color: var(--gece);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .08em;
+      padding: 10px 18px;
+      border-radius: 99px;
+      transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+      max-width: 92vw;
+      z-index: 50;
+    }
+
+    #durum.gor {
+      transform: translateX(-50%);
+    }
+
+    #durum.kotu {
+      background: var(--hata);
+      color: #fff;
+    }
+
+    @media(max-width:560px) {
+      .urun {
+        grid-template-columns: 1fr;
+      }
+
+      .urun .islem {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="ust">
+    <p class="marka">EV'İM<small>Menü Paneli</small></p>
+    <button id="cikis" class="kucuk" hidden>Çıkış</button>
+  </header>
+  <main>
+    <!-- giriş -->
+    <section class="kart" id="girisKart">
+      <h2>Giriş</h2>
+      <p class="not">Bu panel yalnızca yetkili e-postalarla çalışır. Fiyat ve menü değişiklikleri
+        <b>siteye anında</b> yansır.</p>
+      <label for="ep">E-posta</label>
+      <input type="email" id="ep" autocomplete="email" placeholder="ornek@eposta.com">
+      <label for="sifre">Şifre</label>
+      <input type="password" id="sifre" autocomplete="current-password" placeholder="••••••••">
+      <div class="satirlar" style="margin-top:14px">
+        <button class="dolu" id="girisBtn">Giriş yap</button>
+        <button id="kayitBtn">İlk giriş — hesap oluştur</button>
+      </div>
+      <p class="not" id="girisNot"></p>
+    </section>
+
+    <!-- düzenleyici -->
+    <section id="panel" hidden>
+      <div class="kart">
+        <div class="satirlar" style="justify-content:space-between">
+          <h2 style="margin:0">Menü</h2>
+          <button class="kucuk dolu" id="katEkle">+ Kategori</button>
+        </div>
+        <p class="not">Değişiklik yap → <b>Kaydet</b>'e bas. "Gizle" ürünü/kategoriyi silmeden menüden
+          kaldırır. Sıra okları menüdeki dizilişi değiştirir.</p>
+      </div>
+      <div id="liste"></div>
+    </section>
+  </main>
+  <div id="durum" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    var URL0 = 'https://wcczpftjgmilkyecaetv.supabase.co';
+    var KEY = 'sb_publishable_OOvgyz4CMuMhbyGoPZ6fSA_Rb_A5UzP';
+    var sb = window.supabase.createClient(URL0, KEY);
+    var $ = function (s) { return document.querySelector(s); };
+    var veriler = [];
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    var durumT = 0;
+    function de(msg, kotu) {
+      var d = $('#durum');
+      d.textContent = msg;
+      d.classList.toggle('kotu', !!kotu);
+      d.classList.add('gor');
+      clearTimeout(durumT);
+      durumT = setTimeout(function () { d.classList.remove('gor'); }, 2600);
+    }
+
+    /* ---- oturum ---- */
+    function gorunum(giris) {
+      $('#girisKart').hidden = giris;
+      $('#panel').hidden = !giris;
+      $('#cikis').hidden = !giris;
+    }
+    $('#girisBtn').onclick = function () {
+      sb.auth.signInWithPassword({ email: $('#ep').value.trim(), password: $('#sifre').value })
+        .then(function (r) {
+          if (r.error) { $('#girisNot').innerHTML = '<span class="hata">Giriş olmadı: ' + esc(r.error.message) + '</span>'; return; }
+          basla();
+        });
+    };
+    $('#kayitBtn').onclick = function () {
+      sb.auth.signUp({ email: $('#ep').value.trim(), password: $('#sifre').value })
+        .then(function (r) {
+          if (r.error) { $('#girisNot').innerHTML = '<span class="hata">' + esc(r.error.message) + '</span>'; return; }
+          $('#girisNot').textContent = 'Hesap oluştu. E-postana gelen onay bağlantısına tıkla, sonra burada giriş yap. (Onay sayfası hata gösterse de onay tamamlanmış olur.)';
+        });
+    };
+    $('#cikis').onclick = function () { sb.auth.signOut().then(function () { gorunum(false); }); };
+
+    function basla() {
+      sb.rpc('yetkili').then(function (r) {
+        if (r.error || r.data !== true) {
+          gorunum(false);
+          $('#girisNot').innerHTML = '<span class="hata">Bu e-posta panel yetkili listesinde değil. Site yöneticisine e-postanı ekletmen gerekiyor.</span>';
+          return;
+        }
+        gorunum(true);
+        yukle();
+      });
+    }
+
+    /* ---- veri ---- */
+    function yukle() {
+      sb.from('kategoriler')
+        .select('id,ad,sira,aktif,urunler(id,ad,aciklama,fiyat,sira,aktif)')
+        .order('sira').order('sira', { foreignTable: 'urunler' })
+        .then(function (r) {
+          if (r.error) { de('Menü yüklenemedi: ' + r.error.message, 1); return; }
+          veriler = r.data || [];
+          cizim();
+        });
+    }
+
+    function cizim() {
+      $('#liste').innerHTML = veriler.map(function (k, ki) {
+        var urunler = (k.urunler || []).map(function (u) {
+          return '<div class="urun' + (u.aktif ? '' : ' pasif') + '" data-uid="' + u.id + '">' +
+            '<div class="urun__metin">' +
+            '<input type="text" class="u-ad" value="' + esc(u.ad) + '" placeholder="Ürün adı">' +
+            '<input type="text" class="u-ac" value="' + esc(u.aciklama) + '" placeholder="Açıklama (isteğe bağlı)">' +
+            '</div>' +
+            '<input type="number" class="u-f" value="' + (u.fiyat == null ? '' : Math.round(u.fiyat)) + '" placeholder="₺" min="0" step="1">' +
+            '<div class="islem">' +
+            '<button class="kucuk u-yukari" title="Yukarı">↑</button>' +
+            '<button class="kucuk u-asagi" title="Aşağı">↓</button>' +
+            '<button class="kucuk dolu u-kaydet">Kaydet</button>' +
+            '<button class="kucuk u-gizle">' + (u.aktif ? 'Gizle' : 'Göster') + '</button>' +
+            '<button class="kucuk tehlike u-sil">Sil</button>' +
+            '</div></div>';
+        }).join('');
+        return '<div class="kat' + (k.aktif ? '' : ' pasifK') + '" data-kid="' + k.id + '">' +
+          '<div class="kat__bas">' +
+          '<button class="kucuk k-yukari" title="Yukarı">↑</button>' +
+          '<button class="kucuk k-asagi" title="Aşağı">↓</button>' +
+          '<input type="text" class="k-ad" value="' + esc(k.ad) + '">' +
+          (k.aktif ? '' : '<span class="rozet">gizli</span>') +
+          '<button class="kucuk dolu k-kaydet">Kaydet</button>' +
+          '<button class="kucuk k-gizle">' + (k.aktif ? 'Gizle' : 'Göster') + '</button>' +
+          '<button class="kucuk tehlike k-sil">Sil</button>' +
+          '</div><div class="icerik">' + urunler +
+          '<div class="satirlar" style="margin-top:10px"><button class="kucuk dolu u-ekle">+ Ürün ekle</button></div>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    /* ---- işlemler (tek dinleyici) ---- */
+    function hane(el, sinif) { return el.closest(sinif); }
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || $('#panel').hidden) return;
+      var katEl = hane(b, '.kat'), urunEl = hane(b, '.urun');
+      var kid = katEl ? +katEl.dataset.kid : null;
+      var uid = urunEl ? +urunEl.dataset.uid : null;
+      var k = veriler.find(function (x) { return x.id === kid; });
+      var u = k && uid ? (k.urunler || []).find(function (x) { return x.id === uid; }) : null;
+
+      function bitir(r, mesaj) {
+        if (r.error) { de('Olmadı: ' + r.error.message, 1); return; }
+        de(mesaj); yukle();
+      }
+
+      if (b.id === 'katEkle') {
+        var sira = veriler.length ? Math.max.apply(null, veriler.map(function (x) { return x.sira; })) + 1 : 0;
+        sb.from('kategoriler').insert({ ad: 'Yeni kategori', sira: sira })
+          .then(function (r) { bitir(r, 'Kategori eklendi'); });
+        return;
+      }
+      if (!katEl) return;
+
+      /* kategori işlemleri */
+      if (b.classList.contains('k-kaydet')) {
+        sb.from('kategoriler').update({ ad: katEl.querySelector('.k-ad').value.trim() || 'Adsız' })
+          .eq('id', kid).then(function (r) { bitir(r, 'Kategori kaydedildi'); });
+      } else if (b.classList.contains('k-gizle')) {
+        sb.from('kategoriler').update({ aktif: !k.aktif }).eq('id', kid)
+          .then(function (r) { bitir(r, k.aktif ? 'Kategori menüden gizlendi' : 'Kategori menüde'); });
+      } else if (b.classList.contains('k-sil')) {
+        if (!confirm('"' + k.ad + '" kategorisi ve içindeki TÜM ürünler silinsin mi?')) return;
+        sb.from('kategoriler').delete().eq('id', kid).then(function (r) { bitir(r, 'Kategori silindi'); });
+      } else if (b.classList.contains('k-yukari') || b.classList.contains('k-asagi')) {
+        var yon = b.classList.contains('k-yukari') ? -1 : 1;
+        var sirali = veriler.slice().sort(function (a, c) { return a.sira - c.sira; });
+        var i = sirali.indexOf(k), j = i + yon;
+        if (j < 0 || j >= sirali.length) return;
+        var A = sirali[i], B = sirali[j];
+        Promise.all([
+          sb.from('kategoriler').update({ sira: B.sira }).eq('id', A.id),
+          sb.from('kategoriler').update({ sira: A.sira }).eq('id', B.id)
+        ]).then(function (rs) { bitir(rs[0].error ? rs[0] : rs[1], 'Sıra değişti'); });
+      }
+
+      /* ürün işlemleri */
+      else if (b.classList.contains('u-ekle')) {
+        var us = (k.urunler || []);
+        var sira2 = us.length ? Math.max.apply(null, us.map(function (x) { return x.sira; })) + 1 : 0;
+        sb.from('urunler').insert({ kategori_id: kid, ad: 'Yeni ürün', aciklama: '', fiyat: null, sira: sira2 })
+          .then(function (r) { bitir(r, 'Ürün eklendi — adını ve fiyatını yazıp Kaydet de'); });
+      } else if (urunEl && b.classList.contains('u-kaydet')) {
+        var f = urunEl.querySelector('.u-f').value;
+        sb.from('urunler').update({
+          ad: urunEl.querySelector('.u-ad').value.trim() || 'Adsız',
+          aciklama: urunEl.querySelector('.u-ac').value.trim(),
+          fiyat: f === '' ? null : +f
+        }).eq('id', uid).then(function (r) { bitir(r, 'Kaydedildi — sitede yayında'); });
+      } else if (urunEl && b.classList.contains('u-gizle')) {
+        sb.from('urunler').update({ aktif: !u.aktif }).eq('id', uid)
+          .then(function (r) { bitir(r, u.aktif ? 'Ürün gizlendi' : 'Ürün menüde'); });
+      } else if (urunEl && b.classList.contains('u-sil')) {
+        if (!confirm('"' + u.ad + '" silinsin mi?')) return;
+        sb.from('urunler').delete().eq('id', uid).then(function (r) { bitir(r, 'Ürün silindi'); });
+      } else if (urunEl && (b.classList.contains('u-yukari') || b.classList.contains('u-asagi'))) {
+        var yon2 = b.classList.contains('u-yukari') ? -1 : 1;
+        var us2 = (k.urunler || []).slice().sort(function (a, c) { return a.sira - c.sira; });
+        var i2 = us2.indexOf(u), j2 = i2 + yon2;
+        if (j2 < 0 || j2 >= us2.length) return;
+        var A2 = us2[i2], B2 = us2[j2];
+        Promise.all([
+          sb.from('urunler').update({ sira: B2.sira }).eq('id', A2.id),
+          sb.from('urunler').update({ sira: A2.sira }).eq('id', B2.id)
+        ]).then(function (rs) { bitir(rs[0].error ? rs[0] : rs[1], 'Sıra değişti'); });
+      }
+    });
+
+    /* açılışta oturum var mı */
+    sb.auth.getSession().then(function (r) {
+      if (r.data && r.data.session) basla(); else gorunum(false);
+    });
+  </script>
+</body>
+
+</html>

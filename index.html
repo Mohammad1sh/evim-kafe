@@ -1349,7 +1349,8 @@
       </div>
     </section>
     <section class="menu" id="menu">
-      <!-- NOT: ürünler ve fiyatlar ÖRNEKTİR — gerçek liste gelince güncellenecek -->
+      <!-- NOT: canlı menü panelden (Supabase) yüklenir; aşağıdaki liste yalnızca
+           bağlantı yoksa görünen YEDEKTİR (ve arama motorları için gömülü kalır). -->
       <div class="menu__head">
         <p class="label">Menü</p>
         <h2 class="menu__title">Masaya<br>gelenler</h2>
@@ -2578,15 +2579,46 @@
       addEventListener('resize', onScroll);
       onScroll();
       /* ---- akordeon menü ---- */
-      const aklar = [...document.querySelectorAll('.ak')];
-      aklar.forEach(a => {
-        const bas = a.querySelector('.ak__bas');
-        bas.addEventListener('click', () => {
-          const acikti = a.classList.contains('acik');
-          aklar.forEach(x => { x.classList.remove('acik'); x.querySelector('.ak__bas').setAttribute('aria-expanded', 'false'); });
-          if (!acikti) { a.classList.add('acik'); bas.setAttribute('aria-expanded', 'true'); tap(5); }
+      function akBagla() {
+        const aklar = [...document.querySelectorAll('.ak')];
+        aklar.forEach(a => {
+          const bas = a.querySelector('.ak__bas');
+          bas.addEventListener('click', () => {
+            const acikti = a.classList.contains('acik');
+            aklar.forEach(x => { x.classList.remove('acik'); x.querySelector('.ak__bas').setAttribute('aria-expanded', 'false'); });
+            if (!acikti) { a.classList.add('acik'); bas.setAttribute('aria-expanded', 'true'); tap(5); }
+          });
         });
-      });
+      }
+      akBagla();
+      /* ---- canlı menü: panelden (Supabase) gelir; ulaşılamazsa gömülü örnek liste kalır ---- */
+      (function canliMenu() {
+        const AD = 'https://wcczpftjgmilkyecaetv.supabase.co';
+        const AN = 'sb_publishable_OOvgyz4CMuMhbyGoPZ6fSA_Rb_A5UzP';
+        const kap = document.querySelector('.akordeon');
+        if (!kap || !window.fetch) return;
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const OK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 9 7 7 7-7"/></svg>';
+        fetch(AD + '/rest/v1/kategoriler?select=id,ad,sira,urunler(id,ad,aciklama,fiyat,sira,aktif)&aktif=eq.true&urunler.aktif=eq.true&order=sira.asc&urunler.order=sira.asc',
+          { headers: { apikey: AN, Authorization: 'Bearer ' + AN } })
+          .then(r => { if (!r.ok) throw 0; return r.json(); })
+          .then(ks => {
+            if (!Array.isArray(ks) || !ks.length) return;
+            kap.innerHTML = ks.map((k, i) => {
+              const urun = (k.urunler || []).map(u =>
+                '<div class="ak__urun"><div><h4>' + esc(u.ad) + '</h4>' +
+                (u.aciklama ? '<p>' + esc(u.aciklama) + '</p>' : '') +
+                '</div><span class="ak__cizgi"></span><b>' + (u.fiyat == null ? '' : '&#8378;' + Math.round(u.fiyat)) + '</b></div>').join('');
+              return '<div class="ak' + (i ? '' : ' acik') + '">' +
+                '<button class="ak__bas" type="button" aria-expanded="' + (i ? 'false' : 'true') + '" aria-controls="akp' + i + '" id="akb' + i + '">' +
+                '<span class="ak__ad">' + esc(k.ad) + '</span><span class="ak__say">' + (k.urunler || []).length + ' çeşit</span>' +
+                '<span class="ak__ok" aria-hidden="true">' + OK + '</span></button>' +
+                '<div class="ak__panel" id="akp' + i + '" role="region" aria-labelledby="akb' + i + '">' +
+                '<div class="ak__ic"><div class="ak__liste">' + urun + '</div></div></div></div>';
+            }).join('');
+            akBagla();
+          }).catch(() => { /* sessiz: gömülü liste zaten ekranda */ });
+      })();
       /* ---- sayaç + görünüme girince aç ---- */
       function countUp(el) {
         const target = parseFloat(el.dataset.count), suffix = el.dataset.suffix || '';
