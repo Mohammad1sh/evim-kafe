@@ -1,8 +1,7 @@
-# Ev'im Kafe — Docker ile çalıştırma
+# Ev'im Kafe — çalıştırma
 
-Amaç: sitenin herkeste **birebir aynı** ortamda çalışması. Sen de arkadaşın da aynı
-komutu verirsiniz, aynı sunucu (nginx) aynı ayarlarla açılır. "Bende çalışıyordu"
-tartışması biter.
+Amaç: sitenin herkeste **birebir aynı** ortamda çalışması. Aynı komut, aynı sunucu
+(nginx), aynı ayarlar — "bende çalışıyordu" tartışması biter.
 
 ## Tek seferlik kurulum
 
@@ -15,25 +14,24 @@ tartışması biter.
 docker compose up -d
 ```
 
-Tarayıcıda: **http://localhost:8080**
+Tarayıcıda: **http://127.0.0.1:8080** (bazı makinelerde `localhost` çalışmayabiliyor,
+127.0.0.1 kullan). Durdurmak için: `docker compose down`
 
-Durdurmak için: `docker compose down`
+## Dosyalar
 
-## Düzenleme akışı
+- `index.html` — sitenin tamamı (tek dosya). Konteynere **canlı bağlı**: kaydet,
+  tarayıcıda yenile, o kadar.
+- `admin.html` — menü/fiyat yönetim paneli (`/admin.html`). Menü verisi Supabase'te
+  durur; panelden yapılan değişiklik siteye anında yansır, deploy gerekmez.
+  Giriş yalnızca yetkili e-postayla yapılabilir.
+- `nginx.conf` — sunucu + güvenlik başlıkları. Bunu değiştirirsen:
+  `docker compose up -d --force-recreate`
 
-`index.html` konteynere **canlı bağlı** — dosyayı kaydet, tarayıcıda yenile, o kadar.
-Yeniden başlatmak, imaj kurmak gerekmez.
+## Birlikte çalışma
 
-## Arkadaşınla çalışma
+Kod GitHub'da: `github.com/Mohammad1sh/evim-kafe`. Depoyu klonla, değişiklik yap,
+push'la. Yayın GitHub Pages üzerinden otomatik güncellenir.
 
-Bu klasörü ona gönder (ya da bir git deposunda paylaşın). O da Docker Desktop kurup
-aynı `docker compose up -d` komutunu verir — ikinizde de aynı şey çalışır.
-
-Aynı ağdaysanız (aynı Wi-Fi), telefondan/onun bilgisayarından şu adresle de bakılır:
-`http://SENIN-IP-ADRESIN:8080` (IP'ni `ipconfig` ile görebilirsin).
-
-## Notlar
-
-- Site tek dosya (`index.html`); `nginx.conf` sunucu ayarı, `compose.yaml` çalıştırma
-  tarifi. `Dockerfile` sadece "imaj olarak paylaşmak istersen" diye duruyor, gerekmez.
-- Telefon numarası (`+90 346 000 00 00`) hâlâ örnek — yayınlamadan önce değiştir.
+```bash
+git clone https://github.com/Mohammad1sh/evim-kafe.git
+```
